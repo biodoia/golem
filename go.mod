@@ -6,7 +6,7 @@ require (
 	github.com/biodoia/framegotui v0.0.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
-	golang.org/x/oauth2 v0.25.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 replace github.com/biodoia/framegotui => ./repos/framegotui
