@@ -17,20 +17,21 @@ import (
 )
 
 type Model struct {
-	input         string
-	width         int
-	height        int
-	loading       bool
-	model         string
-	apiKey        string
-	client        *zhipu.Client
-	cmds          map[string]*tools.Command
-	ready         bool
-	theme         lipgloss.Style
-	streamText    <-chan string
-	streamErr     <-chan error
-	sessions      *session.SessionManager
+	input          string
+	width          int
+	height         int
+	loading        bool
+	model          string
+	apiKey         string
+	client         *zhipu.Client
+	cmds           map[string]*tools.Command
+	ready          bool
+	theme          lipgloss.Style
+	streamText     <-chan string
+	streamErr      <-chan error
+	sessions       *session.SessionManager
 	currentSession *session.Session
+	statusMessage  string
 }
 
 type Message struct {
@@ -56,6 +57,8 @@ type sessionMsg struct {
 	session *session.Session
 }
 
+type statusMsg struct{ text string }
+
 func NewAppModel(settings config.Settings) Model {
 	client := zhipu.NewClient(settings.APIKey)
 	cmds := tools.Commands()
@@ -71,12 +74,12 @@ func NewAppModel(settings config.Settings) Model {
 	}
 
 	return Model{
-		model:         settings.Model,
-		apiKey:        settings.APIKey,
-		client:        client,
-		cmds:          cmds,
-		theme:         lipgloss.NewStyle().Foreground(lipgloss.Color("#00ffff")),
-		sessions:      sm,
+		model:          settings.Model,
+		apiKey:         settings.APIKey,
+		client:         client,
+		cmds:           cmds,
+		theme:          lipgloss.NewStyle().Foreground(lipgloss.Color("#00ffff")),
+		sessions:       sm,
 		currentSession: currentSession,
 	}
 }
@@ -105,9 +108,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			input := m.input
 			m.input = ""
+			m.statusMessage = ""
+
+			// Handle session commands (:s, :l, :n, :load, :rename, :delete)
+			if handled, newModel, cmd := m.handleSessionCommand(input); handled {
+				return newModel, cmd
+			}
+
+			// Handle tool commands (/...)
 			if cmd, args, isCmd := tools.ParseCommand(input); isCmd {
 				return m, m.handleCommand(cmd, args)
 			}
+
+			// Regular message
 			m.addMessage("user", input)
 			m.loading = true
 			return m, m.sendMessage(input)
@@ -115,25 +128,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.input) > 0 {
 				m.input = m.input[:len(m.input)-1]
 			}
-		case ":s":
-			// Save session
-			if m.currentSession != nil {
-				m.sessions.Save(m.currentSession)
-				m.addMessage("system", "Session saved: "+m.currentSession.Name)
-			}
-		case ":n":
-			// New session
-			m.currentSession = m.sessions.CreateSession("New Chat", m.model)
-			m.addMessage("system", "New session started")
-		case ":l":
-			// List sessions
-			sessions := m.sessions.ListSessions()
-			var b strings.Builder
-			b.WriteString("Sessions:\n")
-			for _, s := range sessions {
-				b.WriteString(fmt.Sprintf("  - %s (%s)\n", s.Name, s.ID))
-			}
-			m.addMessage("assistant", b.String())
 		default:
 			if len(msg.String()) == 1 {
 				m.input += msg.String()
@@ -145,20 +139,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case startStreamMsg:
 		m.streamText = msg.textCh
 		m.streamErr = msg.errCh
+		// Add empty assistant message to stream into
+		m.addMessage("assistant", "")
 		return m, streamNext(m.streamText, m.streamErr)
 	case streamingMsg:
-		if m.currentSession == nil || len(m.currentSession.Messages) == 0 {
-			m.addMessage("assistant", msg.text)
-		} else {
+		if m.currentSession != nil && len(m.currentSession.Messages) > 0 {
 			lastIdx := len(m.currentSession.Messages) - 1
-			m.currentSession.Messages[lastIdx].Content = m.currentSession.Messages[lastIdx].Content.(string) + msg.text
+			if content, ok := m.currentSession.Messages[lastIdx].Content.(string); ok {
+				m.currentSession.Messages[lastIdx].Content = content + msg.text
+			}
 		}
 		return m, streamNext(m.streamText, m.streamErr)
 	case streamDoneMsg:
 		m.loading = false
 		m.streamText = nil
 		m.streamErr = nil
-		// Auto-save on stream done
+		// Auto-save after stream completes
 		if m.currentSession != nil {
 			m.sessions.Save(m.currentSession)
 		}
@@ -167,8 +163,187 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.streamText = nil
 		m.streamErr = nil
 		m.addMessage("error", msg.err.Error())
+	case statusMsg:
+		m.statusMessage = msg.text
 	}
 	return m, nil
+}
+
+// handleSessionCommand handles session management commands
+// Returns (handled, newModel, cmd)
+func (m Model) handleSessionCommand(input string) (bool, tea.Model, tea.Cmd) {
+	input = strings.TrimSpace(input)
+	if !strings.HasPrefix(input, ":") {
+		return false, m, nil
+	}
+
+	parts := strings.Fields(input[1:]) // Remove leading ":"
+	if len(parts) == 0 {
+		return false, m, nil
+	}
+
+	cmd := strings.ToLower(parts[0])
+	args := parts[1:]
+
+	switch cmd {
+	case "s", "save":
+		// :s or :save - save current session
+		if m.currentSession != nil {
+			if err := m.sessions.Save(m.currentSession); err != nil {
+				m.statusMessage = "Save failed: " + err.Error()
+			} else {
+				m.statusMessage = "Session saved: " + m.currentSession.Name
+			}
+		}
+		return true, m, nil
+
+	case "n", "new":
+		// :n or :new [name] - create new session
+		name := "New Chat"
+		if len(args) > 0 {
+			name = strings.Join(args, " ")
+		}
+		// Save current before creating new
+		if m.currentSession != nil {
+			m.sessions.Save(m.currentSession)
+		}
+		m.currentSession = m.sessions.CreateSession(name, m.model)
+		m.statusMessage = "New session: " + name
+		return true, m, nil
+
+	case "l", "list":
+		// :l or :list - list all sessions
+		infos := m.sessions.ListSessionsInfo()
+		var b strings.Builder
+		b.WriteString("Sessions:\n")
+		for _, info := range infos {
+			marker := "  "
+			if info.IsCurrent {
+				marker = "→ "
+			}
+			b.WriteString(fmt.Sprintf("%s[%s] %s (%d msgs, %s)\n",
+				marker,
+				info.ID[:8], // Show first 8 chars of ID
+				info.Name,
+				info.Messages,
+				info.UpdatedAt.Format("Jan 2 15:04"),
+			))
+		}
+		b.WriteString("\nUse :load <id> to load a session")
+		m.addMessage("system", b.String())
+		return true, m, nil
+
+	case "load":
+		// :load <id> - load a session by ID (partial match supported)
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :load <session-id>"
+			return true, m, nil
+		}
+		
+		// Save current first
+		if m.currentSession != nil {
+			m.sessions.Save(m.currentSession)
+		}
+
+		sess, err := m.sessions.FindSessionByPartialID(args[0])
+		if err != nil {
+			m.statusMessage = err.Error()
+			return true, m, nil
+		}
+		m.currentSession = sess
+		m.sessions.SetCurrent(sess)
+		m.statusMessage = "Loaded: " + sess.Name
+		return true, m, nil
+
+	case "rename":
+		// :rename <new-name> - rename current session
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :rename <new-name>"
+			return true, m, nil
+		}
+		if m.currentSession == nil {
+			m.statusMessage = "No current session"
+			return true, m, nil
+		}
+		newName := strings.Join(args, " ")
+		if err := m.sessions.RenameSession(m.currentSession.ID, newName); err != nil {
+			m.statusMessage = "Rename failed: " + err.Error()
+		} else {
+			m.currentSession.Name = newName
+			m.statusMessage = "Renamed to: " + newName
+		}
+		return true, m, nil
+
+	case "delete", "del":
+		// :delete <id> - delete a session
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :delete <session-id>"
+			return true, m, nil
+		}
+		sess, err := m.sessions.FindSessionByPartialID(args[0])
+		if err != nil {
+			m.statusMessage = err.Error()
+			return true, m, nil
+		}
+		if m.currentSession != nil && m.currentSession.ID == sess.ID {
+			m.statusMessage = "Cannot delete current session"
+			return true, m, nil
+		}
+		if err := m.sessions.DeleteSession(sess.ID); err != nil {
+			m.statusMessage = "Delete failed: " + err.Error()
+		} else {
+			m.statusMessage = "Deleted: " + sess.Name
+		}
+		return true, m, nil
+
+	case "export":
+		// :export <path> - export current session to file
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :export <path>"
+			return true, m, nil
+		}
+		if m.currentSession == nil {
+			m.statusMessage = "No current session"
+			return true, m, nil
+		}
+		if err := m.sessions.ExportSession(m.currentSession.ID, args[0]); err != nil {
+			m.statusMessage = "Export failed: " + err.Error()
+		} else {
+			m.statusMessage = "Exported to: " + args[0]
+		}
+		return true, m, nil
+
+	case "import":
+		// :import <path> - import session from file
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :import <path>"
+			return true, m, nil
+		}
+		sess, err := m.sessions.ImportSession(args[0])
+		if err != nil {
+			m.statusMessage = "Import failed: " + err.Error()
+		} else {
+			m.statusMessage = "Imported: " + sess.Name
+		}
+		return true, m, nil
+
+	case "help", "h", "?":
+		// :help - show session commands
+		help := `Session Commands:
+  :s, :save          Save current session
+  :n, :new [name]    Create new session
+  :l, :list          List all sessions
+  :load <id>         Load session by ID
+  :rename <name>     Rename current session
+  :delete <id>       Delete a session
+  :export <path>     Export session to file
+  :import <path>     Import session from file
+  :help              Show this help`
+		m.addMessage("system", help)
+		return true, m, nil
+	}
+
+	return false, m, nil
 }
 
 func (m Model) addMessage(role string, content string) {
@@ -179,6 +354,7 @@ func (m Model) addMessage(role string, content string) {
 		Role:    role,
 		Content: content,
 	})
+	m.currentSession.UpdatedAt = time.Now()
 }
 
 func (m Model) View() string {
@@ -186,29 +362,33 @@ func (m Model) View() string {
 		return "Loading..."
 	}
 	var b strings.Builder
-	b.WriteString(m.theme.Render("GOLEM") + "\n")
+	b.WriteString(m.theme.Render("GOLEM"))
 
 	// Show current session
 	if m.currentSession != nil {
-		b.WriteString(fmt.Sprintf(" [%s]\n", m.currentSession.Name))
+		b.WriteString(fmt.Sprintf(" [%s]", m.currentSession.Name))
 	}
-	b.WriteString("\n")
+	b.WriteString("\n\n")
 
 	// Show messages
 	if m.currentSession != nil {
 		for _, msg := range m.currentSession.Messages {
 			prefix := "You"
+			style := lipgloss.NewStyle()
 			switch msg.Role {
 			case "assistant":
 				prefix = "Golem"
+				style = m.theme
 			case "system":
 				prefix = "System"
+				style = lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
 			case "error":
 				prefix = "Error"
+				style = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5555"))
 			}
 			content := msg.Content
 			if s, ok := content.(string); ok {
-				b.WriteString(fmt.Sprintf("%s: %s\n\n", prefix, s))
+				b.WriteString(style.Render(prefix+": ") + s + "\n\n")
 			}
 		}
 	}
@@ -219,18 +399,17 @@ func (m Model) View() string {
 	b.WriteString("› " + m.input + "\n")
 
 	// Status bar
-	status := fmt.Sprintf(" [:%s] Save | [:n] New | [:l] List | [q] Quit | Model: %s",
-		m.currentSessionName(), m.model)
+	var statusParts []string
+	if m.statusMessage != "" {
+		statusParts = append(statusParts, m.statusMessage)
+	}
+	statusParts = append(statusParts, fmt.Sprintf("Model: %s", m.model))
+	statusParts = append(statusParts, ":help for commands")
+
+	status := " " + strings.Join(statusParts, " | ")
 	b.WriteString("\n" + m.theme.Render(status))
 
 	return b.String()
-}
-
-func (m Model) currentSessionName() string {
-	if m.currentSession == nil {
-		return "?"
-	}
-	return m.currentSession.Name
 }
 
 func (m Model) handleCommand(cmd string, args []string) tea.Cmd {
@@ -268,7 +447,6 @@ func (m Model) sendMessage(input string) tea.Cmd {
 				}
 			}
 		}
-		messages = append(messages, zhipu.Message{Role: "user", Content: input})
 
 		req := &zhipu.ChatRequest{
 			Model:    m.model,

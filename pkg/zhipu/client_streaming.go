@@ -12,35 +12,13 @@ import (
 	"strings"
 )
 
-// StreamEvent represents a parsed streaming event
-type StreamEvent struct {
-	ID      string       `json:"id"`
-	Created int64        `json:"created"`
-	Model   string       `json:"model"`
-	Choices []StreamChoice `json:"choices"`
-}
-
-// StreamChoice represents a choice in streaming response
-type StreamChoice struct {
-	Index        int         `json:"index"`
-	Delta        StreamDelta `json:"delta"`
-	FinishReason string      `json:"finish_reason,omitempty"`
-}
-
-// StreamDelta represents incremental content in streaming
-type StreamDelta struct {
-	Role      string     `json:"role,omitempty"`
-	Content   string     `json:"content,omitempty"`
-	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
-}
-
-// ChatStreamWithTools sends a streaming chat completion with tool support
-// Returns channels for text content, tool calls, and errors
+// ChatStreamWithTools streams chat completion with tool call support
+// Returns separate channels for text chunks, tool calls, and errors
 func (c *Client) ChatStreamWithTools(ctx context.Context, req *ChatRequest) (<-chan string, <-chan ToolCall, <-chan error) {
 	req.Stream = true
 
-	textCh := make(chan string)
-	toolCh := make(chan ToolCall)
+	textCh := make(chan string, 100)
+	toolCh := make(chan ToolCall, 10)
 	errCh := make(chan error, 1)
 
 	go func() {
@@ -76,8 +54,8 @@ func (c *Client) ChatStreamWithTools(ctx context.Context, req *ChatRequest) (<-c
 			return
 		}
 
-		// Track partial tool calls being built up
-		toolCallBuffer := make(map[int]*ToolCall) // index -> partial tool call
+		// Accumulate tool call fragments (streamed incrementally)
+		toolCallBuilders := make(map[int]*toolCallBuilder)
 
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan() {
@@ -94,16 +72,16 @@ func (c *Client) ChatStreamWithTools(ctx context.Context, req *ChatRequest) (<-c
 			}
 			payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 			if payload == "[DONE]" {
-				// Flush any remaining tool calls
-				for _, tc := range toolCallBuffer {
-					if tc != nil && tc.ID != "" {
-						toolCh <- *tc
+				// Emit any completed tool calls
+				for _, b := range toolCallBuilders {
+					if b.complete() {
+						toolCh <- b.build()
 					}
 				}
 				return
 			}
 
-			var event StreamEvent
+			var event streamEvent
 			if err := json.Unmarshal([]byte(payload), &event); err != nil {
 				continue
 			}
@@ -114,41 +92,36 @@ func (c *Client) ChatStreamWithTools(ctx context.Context, req *ChatRequest) (<-c
 					textCh <- choice.Delta.Content
 				}
 
-				// Handle tool calls (may come in chunks)
-				for _, tc := range choice.Delta.ToolCalls {
-					idx := 0 // Default index
-					if tc.ID != "" {
-						// New tool call starting
-						existing := toolCallBuffer[idx]
-						if existing != nil && existing.ID != "" {
-							// Flush the previous tool call
-							toolCh <- *existing
-						}
-						toolCallBuffer[idx] = &ToolCall{
-							ID:   tc.ID,
-							Type: tc.Type,
-							Function: struct {
-								Name      string `json:"name"`
-								Arguments string `json:"arguments"`
-							}{
-								Name:      tc.Function.Name,
-								Arguments: tc.Function.Arguments,
-							},
-						}
-					} else if toolCallBuffer[idx] != nil {
-						// Continuation of existing tool call (arguments chunk)
-						toolCallBuffer[idx].Function.Arguments += tc.Function.Arguments
+				// Handle tool calls (streamed as deltas)
+				for _, tcDelta := range choice.Delta.ToolCalls {
+					idx := tcDelta.Index
+					if _, exists := toolCallBuilders[idx]; !exists {
+						toolCallBuilders[idx] = &toolCallBuilder{}
+					}
+					b := toolCallBuilders[idx]
+
+					if tcDelta.ID != "" {
+						b.id = tcDelta.ID
+					}
+					if tcDelta.Type != "" {
+						b.typ = tcDelta.Type
+					}
+					if tcDelta.Function.Name != "" {
+						b.funcName = tcDelta.Function.Name
+					}
+					if tcDelta.Function.Arguments != "" {
+						b.funcArgs += tcDelta.Function.Arguments
 					}
 				}
 
-				// Check if finish_reason indicates tool_calls complete
+				// Check if finish_reason indicates completion
 				if choice.FinishReason == "tool_calls" || choice.FinishReason == "stop" {
-					for _, tc := range toolCallBuffer {
-						if tc != nil && tc.ID != "" {
-							toolCh <- *tc
+					for _, b := range toolCallBuilders {
+						if b.complete() {
+							toolCh <- b.build()
 						}
 					}
-					toolCallBuffer = make(map[int]*ToolCall)
+					toolCallBuilders = make(map[int]*toolCallBuilder)
 				}
 			}
 		}
@@ -159,6 +132,59 @@ func (c *Client) ChatStreamWithTools(ctx context.Context, req *ChatRequest) (<-c
 	}()
 
 	return textCh, toolCh, errCh
+}
+
+// streamEvent represents a streaming SSE event
+type streamEvent struct {
+	ID      string `json:"id"`
+	Created int64  `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Index int `json:"index"`
+		Delta struct {
+			Role      string          `json:"role,omitempty"`
+			Content   string          `json:"content"`
+			ToolCalls []toolCallDelta `json:"tool_calls"`
+		} `json:"delta"`
+		FinishReason string `json:"finish_reason"`
+	} `json:"choices"`
+}
+
+// toolCallDelta represents incremental tool call data in stream
+type toolCallDelta struct {
+	Index    int    `json:"index"`
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Function struct {
+		Name      string `json:"name"`
+		Arguments string `json:"arguments"`
+	} `json:"function"`
+}
+
+// toolCallBuilder accumulates streamed tool call fragments
+type toolCallBuilder struct {
+	id       string
+	typ      string
+	funcName string
+	funcArgs string
+}
+
+func (b *toolCallBuilder) complete() bool {
+	return b.id != "" && b.funcName != ""
+}
+
+func (b *toolCallBuilder) build() ToolCall {
+	return ToolCall{
+		ID:   b.id,
+		Type: b.typ,
+		Function: struct {
+			Name      string `json:"name"`
+			Arguments string `json:"arguments"`
+		}{
+			Name:      b.funcName,
+			Arguments: b.funcArgs,
+		},
+	}
 }
 
 // StreamResult collects all streaming output into a final result

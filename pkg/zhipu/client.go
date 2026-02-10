@@ -339,6 +339,62 @@ func (c *Client) CodeCompletion(ctx context.Context, prompt string, language str
 	return content, nil
 }
 
+// NewFunctionTool creates a function tool definition
+func NewFunctionTool(name, description string, parameters interface{}) Tool {
+	return Tool{
+		Type: "function",
+		Function: &Function{
+			Name:        name,
+			Description: description,
+			Parameters:  parameters,
+		},
+	}
+}
+
+// JSONSchema helpers for building function parameters
+type JSONSchema struct {
+	Type        string                 `json:"type"`
+	Description string                 `json:"description,omitempty"`
+	Properties  map[string]*JSONSchema `json:"properties,omitempty"`
+	Required    []string               `json:"required,omitempty"`
+	Items       *JSONSchema            `json:"items,omitempty"`
+	Enum        []string               `json:"enum,omitempty"`
+}
+
+// NewObjectSchema creates an object schema for function parameters
+func NewObjectSchema(properties map[string]*JSONSchema, required []string) *JSONSchema {
+	return &JSONSchema{
+		Type:       "object",
+		Properties: properties,
+		Required:   required,
+	}
+}
+
+// StringProp creates a string property schema
+func StringProp(description string) *JSONSchema {
+	return &JSONSchema{Type: "string", Description: description}
+}
+
+// IntProp creates an integer property schema
+func IntProp(description string) *JSONSchema {
+	return &JSONSchema{Type: "integer", Description: description}
+}
+
+// BoolProp creates a boolean property schema
+func BoolProp(description string) *JSONSchema {
+	return &JSONSchema{Type: "boolean", Description: description}
+}
+
+// ArrayProp creates an array property schema
+func ArrayProp(description string, items *JSONSchema) *JSONSchema {
+	return &JSONSchema{Type: "array", Description: description, Items: items}
+}
+
+// EnumProp creates an enum property schema
+func EnumProp(description string, values []string) *JSONSchema {
+	return &JSONSchema{Type: "string", Description: description, Enum: values}
+}
+
 // AllModels returns all available models
 func AllModels() []string {
 	return []string{
