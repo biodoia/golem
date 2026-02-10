@@ -1,0 +1,24 @@
+specialist: Platform
+skills:
+  - architecture
+  - module boundaries
+  - dependency management
+microtasks:
+  - id: P1.1
+    title: "Define app core boundaries"
+    details:
+      - Create internal/app with core state and event bus
+      - Isolate ui model adapters
+      - Define provider interface set
+  - id: P1.2
+    title: "Refactor dependency wiring"
+    details:
+      - Centralize client creation
+      - Inject providers into UI
+      - Avoid global state
+  - id: P1.3
+    title: "Add error policy and logging"
+    details:
+      - Structured logger
+      - error wrapping conventions
+      - user-facing error mapping

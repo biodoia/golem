@@ -1,0 +1,46 @@
+project: golem_full_parity
+objective: "Full Claude Code parity + Z.AI extensions + enterprise vibe coding"
+plan_reviews:
+  - review: "critical_pass_1"
+    focus:
+      - scope completeness
+      - cross-module dependencies
+      - missing acceptance criteria
+    decisions:
+      - add explicit MCP lifecycle tasks
+      - expand settings schema coverage
+      - add output format modes
+  - review: "critical_pass_2"
+    focus:
+      - execution order risks
+      - specialist ownership clarity
+      - microtask atomicity
+    decisions:
+      - split CLI work into flags/parsers/handlers
+      - separate slash command discovery vs execution
+      - isolate UI streaming from provider streaming
+macro_phases:
+  - id: P1
+    name: "Foundation + Config"
+    specialists: ["Platform", "Config"]
+  - id: P2
+    name: "Z.AI Provider + Tools"
+    specialists: ["AIProvider"]
+  - id: P3
+    name: "CLI Parity"
+    specialists: ["CLI"]
+  - id: P4
+    name: "Slash Commands"
+    specialists: ["Automation"]
+  - id: P5
+    name: "MCP Enterprise"
+    specialists: ["MCP"]
+  - id: P6
+    name: "Interactive Mode + UX"
+    specialists: ["UX"]
+  - id: P7
+    name: "Output Modes + Export"
+    specialists: ["CLI", "UX"]
+  - id: P8
+    name: "Enterprise Quality"
+    specialists: ["Quality"]

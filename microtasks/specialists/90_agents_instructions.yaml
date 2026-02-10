@@ -1,0 +1,46 @@
+agents:
+  - name: Platform
+    mission: "Define app boundaries and wiring without global state."
+    constraints:
+      - keep UI and provider decoupled
+      - ensure dependency injection
+  - name: Config
+    mission: "Implement full settings schema with validation and env overrides."
+    constraints:
+      - preserve backwards compatibility
+      - provide clear precedence
+  - name: AIProvider
+    mission: "Deliver full Z.AI parity with robust streaming and tools."
+    constraints:
+      - align to spec endpoints
+      - handle business errors
+  - name: CLI
+    mission: "Achieve full CLI parity with Claude flags and output modes."
+    constraints:
+      - maintain non-interactive usability
+      - include examples and help
+  - name: Automation
+    mission: "Provide slash commands discovery/execution with metadata."
+    constraints:
+      - resolve conflicts
+      - enforce safe execution defaults
+  - name: MCP
+    mission: "Implement MCP lifecycle and transports with config sync."
+    constraints:
+      - support .mcp.json project scope
+      - handle timeouts and retries
+  - name: UX
+    mission: "Deliver interactive mode parity and robust TUI layout."
+    constraints:
+      - preserve performance
+      - ensure accessibility
+  - name: Output
+    mission: "Provide output formats and export features."
+    constraints:
+      - ensure JSON validity
+      - cover streaming output
+  - name: Quality
+    mission: "Ensure reliability with tests and observability."
+    constraints:
+      - run go test ./...
+      - avoid flaky tests

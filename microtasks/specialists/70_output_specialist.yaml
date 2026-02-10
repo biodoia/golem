@@ -1,0 +1,17 @@
+specialist: Output
+skills:
+  - formatting
+  - serialization
+  - export
+microtasks:
+  - id: P7.1
+    title: "Output modes"
+    details:
+      - compact
+      - verbose
+      - json
+  - id: P7.2
+    title: "Transcript export"
+    details:
+      - save to file
+      - copy to clipboard (optional)

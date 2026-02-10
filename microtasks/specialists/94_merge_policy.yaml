@@ -1,0 +1,9 @@
+merge_policy:
+  rules:
+    - no direct edits to go.mod without orchestrator approval
+    - conflicts resolved by orchestrator
+    - run gofmt on modified files
+    - run go test ./... per macro phase
+  commit_guidelines:
+    - use conventional commits
+    - include phase id in commit scope

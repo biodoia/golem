@@ -1,0 +1,17 @@
+shared_contracts:
+  provider_interface:
+    methods:
+      - Chat(ctx, model, input) -> response
+      - StreamChat(ctx, model, input) -> stream
+  settings:
+    precedence:
+      - env
+      - project settings
+      - user settings
+  commands:
+    discovery_paths:
+      - .golem/commands
+      - ~/.golem/commands
+  mcp:
+    config_file: .mcp.json
+    scopes: [project, user]

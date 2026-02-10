@@ -1,0 +1,40 @@
+phase_checklist:
+  - phase: P1
+    checks:
+      - app boundaries defined
+      - config schema expanded
+      - logging + error policy added
+  - phase: P2
+    checks:
+      - Z.AI endpoints parity
+      - SSE streaming validated
+      - tools/agent APIs wired
+  - phase: P3
+    checks:
+      - CLI flags parity
+      - non-interactive mode works
+      - help and examples updated
+  - phase: P4
+    checks:
+      - slash commands discovery
+      - execution + metadata
+      - help list aggregates sources
+  - phase: P5
+    checks:
+      - MCP add/list/remove
+      - .mcp.json write and merge
+      - transports supported
+  - phase: P6
+    checks:
+      - interactive history
+      - panel layout stable
+      - theme applied
+  - phase: P7
+    checks:
+      - output modes
+      - export/transcript
+  - phase: P8
+    checks:
+      - tests added
+      - metrics/logs
+      - graceful degradation

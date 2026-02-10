@@ -1,0 +1,23 @@
+specialist: Quality
+skills:
+  - testing
+  - observability
+  - reliability
+microtasks:
+  - id: P8.1
+    title: "Testing baseline"
+    details:
+      - unit tests for CLI parser
+      - config validation tests
+      - provider mock tests
+      - JSON streaming output tests
+  - id: P8.2
+    title: "Observability"
+    details:
+      - structured logs
+      - metrics counters
+  - id: P8.3
+    title: "Graceful degradation"
+    details:
+      - offline mode
+      - UI error banners

@@ -1,0 +1,24 @@
+specialist: Config
+skills:
+  - configuration
+  - validation
+  - defaults
+microtasks:
+  - id: P1.4
+    title: "Expand settings schema"
+    details:
+      - Add keys from Claude settings
+      - Support env var overrides
+      - Provide defaults and validation
+      - Include explicit key list from docs (mcp, ui, output, limits)
+  - id: P1.5
+    title: "Settings resolution precedence"
+    details:
+      - project settings
+      - user settings
+      - environment overrides
+  - id: P1.6
+    title: "Config migration guide"
+    details:
+      - map from legacy keys
+      - add warnings for deprecated keys

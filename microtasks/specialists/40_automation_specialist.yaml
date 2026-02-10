@@ -1,0 +1,24 @@
+specialist: Automation
+skills:
+  - scripting
+  - command discovery
+  - execution sandboxing
+microtasks:
+  - id: P4.1
+    title: "Slash commands discovery"
+    details:
+      - support subdirectories
+      - metadata parsing
+      - conflict resolution
+  - id: P4.2
+    title: "Command execution"
+    details:
+      - args parsing
+      - timeouts
+      - stdout/stderr routing
+      - sandbox defaults and allowlist
+  - id: P4.3
+    title: "Command help list"
+    details:
+      - aggregate local + user commands
+      - display origin and scope

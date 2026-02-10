@@ -1,0 +1,40 @@
+method: specialist_orchestrated_plan
+purpose: "Full-parity delivery with multi-agent orchestration"
+steps:
+  - name: Intake
+    actions:
+      - load plan overview and agent instructions
+      - verify dependencies and acceptance criteria
+  - name: Orchestration
+    actions:
+      - instantiate specialists per 95_agent_prompts.yaml
+      - enforce 99_dependencies.yaml ordering
+      - apply 98_phase_checklist.yaml at each phase
+  - name: Execution
+    actions:
+      - specialists implement microtasks
+      - orchestrator resolves conflicts per 94_merge_policy.yaml
+      - run gofmt and go test ./... each phase
+  - name: Validation
+    actions:
+      - verify 91_acceptance_criteria.yaml
+      - update risk register if issues encountered
+  - name: Delivery
+    actions:
+      - produce report and handoff notes
+artifacts:
+  - microtasks/specialists/00_plan_overview.yaml
+  - microtasks/specialists/90_agents_instructions.yaml
+  - microtasks/specialists/95_agent_prompts.yaml
+  - microtasks/specialists/96_agent_registry.yaml
+  - microtasks/specialists/97_orchestrator_prompt.yaml
+  - microtasks/specialists/98_phase_checklist.yaml
+  - microtasks/specialists/99_dependencies.yaml
+  - microtasks/specialists/91_acceptance_criteria.yaml
+  - microtasks/specialists/92_risk_register.yaml
+  - microtasks/specialists/93_shared_contracts.yaml
+  - microtasks/specialists/94_merge_policy.yaml
+  - microtasks/specialists/REPORT.txt
+handoff_notes:
+  - "Copy this file and the microtasks/specialists directory into autoschei, spegoplain, framegotui, and gommander repos."
+  - "Run orchestration using the Orchestrator prompt and specialist prompts."

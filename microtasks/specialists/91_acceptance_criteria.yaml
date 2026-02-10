@@ -1,0 +1,15 @@
+acceptance_criteria:
+  - id: A1
+    description: "CLI parity covers core flags from Claude Code"
+  - id: A2
+    description: "Settings schema supports documented keys and env overrides"
+  - id: A3
+    description: "Slash commands support subdirectories, metadata, and sandbox defaults"
+  - id: A4
+    description: "MCP add/list/remove and .mcp.json lifecycle complete"
+  - id: A5
+    description: "Interactive mode has history + checkpointing stub"
+  - id: A6
+    description: "Output modes produce valid JSON under streaming"
+  - id: A7
+    description: "go test ./... passes"

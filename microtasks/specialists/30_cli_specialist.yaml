@@ -1,0 +1,23 @@
+specialist: CLI
+skills:
+  - command parsing
+  - flags
+  - output modes
+microtasks:
+  - id: P3.1
+    title: "Implement full CLI flags"
+    details:
+      - model/provider/system prompt flags
+      - input files and stdin
+      - max tokens, temperature, top_p
+      - extract explicit flag list from docs
+  - id: P3.2
+    title: "Non-interactive mode"
+    details:
+      - one-shot with streaming option
+      - JSON output
+  - id: P3.3
+    title: "CLI help and examples"
+    details:
+      - usage sections
+      - flag descriptions

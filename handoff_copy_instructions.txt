@@ -1,0 +1,6 @@
+Copy instructions
+
+1) Copy development_method.yaml into autoschei, spegoplain, framegotui, and gommander repos.
+2) Copy the entire microtasks/specialists directory into each repo.
+3) Use 97_orchestrator_prompt.yaml to coordinate specialists.
+4) Validate with 98_phase_checklist.yaml and 91_acceptance_criteria.yaml.

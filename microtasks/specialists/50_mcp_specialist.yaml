@@ -1,0 +1,24 @@
+specialist: MCP
+skills:
+  - protocol integration
+  - process management
+  - config lifecycle
+microtasks:
+  - id: P5.1
+    title: "MCP config lifecycle"
+    details:
+      - add/list/remove commands
+      - write .mcp.json
+      - merge user/project scopes
+  - id: P5.2
+    title: "Transport support"
+    details:
+      - stdio transport
+      - http transport (headers/auth)
+      - npx wrapper for Windows
+  - id: P5.3
+    title: "Tool discovery and caching"
+    details:
+      - list tools
+      - refresh with backoff
+      - limit max output tokens

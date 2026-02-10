@@ -1,0 +1,13 @@
+risks:
+  - id: R1
+    description: "Parallel edits to UI and CLI cause merge conflicts"
+    mitigation: "Orchestrator enforces branch boundaries and integration checkpoints"
+  - id: R2
+    description: "Streaming SSE parsing breaks output modes"
+    mitigation: "Add stream parser tests and gate output modes on parser readiness"
+  - id: R3
+    description: "MCP config changes break compatibility"
+    mitigation: "Provide migration and fallback to user-scoped config"
+  - id: R4
+    description: "Slash command execution risks running unsafe scripts"
+    mitigation: "Introduce allowlist + sandbox defaults"

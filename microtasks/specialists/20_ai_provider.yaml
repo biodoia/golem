@@ -1,0 +1,28 @@
+specialist: AIProvider
+skills:
+  - API integration
+  - streaming
+  - error handling
+microtasks:
+  - id: P2.1
+    title: "Z.AI chat parity"
+    details:
+      - model params parity (temp, top_p, max_tokens)
+      - multi-message history support
+  - id: P2.2
+    title: "Streaming SSE robustness"
+    details:
+      - handle multi-line events
+      - retry transient errors
+      - propagate finish reasons
+  - id: P2.3
+    title: "Tool and agent APIs"
+    details:
+      - web_search
+      - agent chat
+      - file upload + retrieve
+  - id: P2.4
+    title: "Provider abstraction"
+    details:
+      - switch between z.ai and other providers
+      - define interface + factory

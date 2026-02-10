@@ -1,0 +1,22 @@
+specialist: UX
+skills:
+  - TUI design
+  - interactive flows
+  - accessibility
+microtasks:
+  - id: P6.1
+    title: "Interactive mode features"
+    details:
+      - input history
+      - command history
+      - checkpointing stub
+  - id: P6.2
+    title: "Panel layout"
+    details:
+      - split chat/input/status
+      - side panels for MCP/tools
+  - id: P6.3
+    title: "Theme + styles"
+    details:
+      - cyberpunk theme
+      - compact/verbose layouts

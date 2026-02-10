@@ -1,0 +1,33 @@
+Report: microtasks/specialists plan artifacts (rev 3)
+
+Core plans:
+- 00_plan_overview.yaml
+- 10_platform_config.yaml
+- 11_config_specialist.yaml
+- 20_ai_provider.yaml
+- 30_cli_specialist.yaml
+- 40_automation_specialist.yaml
+- 50_mcp_specialist.yaml
+- 60_ux_specialist.yaml
+- 70_output_specialist.yaml
+- 80_quality_specialist.yaml
+
+Agent setup:
+- 90_agents_instructions.yaml
+- 95_agent_prompts.yaml
+- 96_agent_registry.yaml
+- 97_orchestrator_prompt.yaml
+
+Governance:
+- 91_acceptance_criteria.yaml
+- 92_risk_register.yaml
+- 93_shared_contracts.yaml
+- 94_merge_policy.yaml
+- 98_phase_checklist.yaml
+- 99_dependencies.yaml
+
+Execution guidance:
+- README.txt
+
+Notes:
+- Plans reviewed 3 times. Added sandbox defaults for slash commands, risk register updated with safety risk, acceptance criteria updated.

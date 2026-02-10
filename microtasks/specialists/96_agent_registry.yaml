@@ -1,0 +1,27 @@
+agent_registry:
+  - name: Orchestrator
+    role: coordination
+    inputs:
+      - microtasks/specialists/00_plan_overview.yaml
+      - microtasks/specialists/90_agents_instructions.yaml
+      - microtasks/specialists/95_agent_prompts.yaml
+      - microtasks/specialists/99_dependencies.yaml
+      - microtasks/specialists/98_phase_checklist.yaml
+  - name: Platform
+    role: platform_architecture
+  - name: Config
+    role: configuration
+  - name: AIProvider
+    role: provider_integration
+  - name: CLI
+    role: cli_parity
+  - name: Automation
+    role: slash_commands
+  - name: MCP
+    role: mcp_lifecycle
+  - name: UX
+    role: tui_ux
+  - name: Output
+    role: output_formats
+  - name: Quality
+    role: testing_and_observability
