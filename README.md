@@ -4,6 +4,10 @@
 
 > The synthesis of Claude Code + OpenCode + Crush + Harmonica + Z.AI
 
+<p align="center">
+  <img src="./demo.gif" alt="Golem Demo" width="800">
+</p>
+
 ```
    ██████╗  ██████╗ ██╗     ███████╗███╗   ███╗
   ██╔════╝ ██╔═══██╗██║     ██╔════╝████╗ ████║

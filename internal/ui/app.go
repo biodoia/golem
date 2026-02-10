@@ -327,6 +327,25 @@ func (m Model) handleSessionCommand(input string) (bool, tea.Model, tea.Cmd) {
 		}
 		return true, m, nil
 
+	case "name":
+		// :name <new-name> - alias for :rename
+		if len(args) == 0 {
+			m.statusMessage = "Usage: :name <new-name>"
+			return true, m, nil
+		}
+		if m.currentSession == nil {
+			m.statusMessage = "No current session"
+			return true, m, nil
+		}
+		newName := strings.Join(args, " ")
+		if err := m.sessions.RenameSession(m.currentSession.ID, newName); err != nil {
+			m.statusMessage = "Rename failed: " + err.Error()
+		} else {
+			m.currentSession.Name = newName
+			m.statusMessage = "Session named: " + newName
+		}
+		return true, m, nil
+
 	case "help", "h", "?":
 		// :help - show session commands
 		help := `Session Commands:
@@ -334,7 +353,8 @@ func (m Model) handleSessionCommand(input string) (bool, tea.Model, tea.Cmd) {
   :n, :new [name]    Create new session
   :l, :list          List all sessions
   :load <id>         Load session by ID
-  :rename <name>     Rename current session
+  :name <name>       Name current session
+  :rename <name>     Rename current session (alias: :name)
   :delete <id>       Delete a session
   :export <path>     Export session to file
   :import <path>     Import session from file
@@ -350,11 +370,12 @@ func (m Model) addMessage(role string, content string) {
 	if m.currentSession == nil {
 		return
 	}
-	m.currentSession.Messages = append(m.currentSession.Messages, zhipu.Message{
-		Role:    role,
-		Content: content,
-	})
-	m.currentSession.UpdatedAt = time.Now()
+	// Use session manager's AddMessage for proper auto-save tracking
+	shouldSave := m.sessions.AddMessage(role, content)
+	if shouldSave {
+		// Auto-save triggered (every N messages)
+		m.sessions.Save(m.currentSession)
+	}
 }
 
 func (m Model) View() string {
