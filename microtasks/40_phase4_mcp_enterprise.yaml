@@ -1,0 +1,20 @@
+phase: mcp_enterprise
+macro_phase: 4
+microtasks:
+  - id: 4.1
+    title: Project-scoped MCP config
+    details:
+      - Support .mcp.json in repo root
+      - Merge user + project MCP config
+  - id: 4.2
+    title: MCP manager concurrency
+    details:
+      - Request IDs per call
+      - Concurrent call routing
+      - Timeouts + cancellation
+  - id: 4.3
+    title: MCP tool registry
+    details:
+      - Cache tool list
+      - Retry strategies
+      - Structured logging

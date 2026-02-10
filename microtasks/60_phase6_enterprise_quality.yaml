@@ -1,0 +1,23 @@
+phase: enterprise_quality
+macro_phase: 6
+microtasks:
+  - id: 6.1
+    title: Validation pipeline alignment
+    details:
+      - Linting and go test tasks
+      - Basic security checks (secrets scan baseline)
+  - id: 6.2
+    title: Observability and metrics
+    details:
+      - Add metrics counters
+      - Error rate tracking
+  - id: 6.3
+    title: Graceful degradation
+    details:
+      - Offline mode fallback
+      - UI error panels
+  - id: 6.4
+    title: Documentation refresh
+    details:
+      - Update README command list
+      - Usage examples

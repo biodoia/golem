@@ -1,0 +1,31 @@
+docs:
+  claude_code:
+    - repos/claude-code-docs/docs/getting-started/overview.md
+    - repos/claude-code-docs/docs/reference/cli-reference.md
+    - repos/claude-code-docs/docs/reference/slash-commands.md
+    - repos/claude-code-docs/docs/reference/interactive-mode.md
+    - repos/claude-code-docs/docs/build-with-claude-code/mcp.md
+    - repos/claude-code-docs/docs/configuration/settings.md
+  zai_global:
+    - repos/zai-api-docs/01_usingtheapis_introduction.md
+    - repos/zai-api-docs/02_usingtheapis_errors.md
+    - repos/zai-api-docs/03_modelapi_chatcompletion.md
+    - repos/zai-api-docs/07_toolapi_websearch.md
+    - repos/zai-api-docs/08_agentapi_agentchat.md
+    - repos/zai-api-docs/09_agentapi_fileupload.md
+    - repos/zai-api-docs/10_agentapi_retrieveresult.md
+    - repos/zai-api-docs/11_agentapi_conversationhistory.md
+  framegotui_specs:
+    - repos/framegotui/docs/ARCHITECTURE.md
+    - repos/framegotui/docs/FRAMEWORK_FOUNDATION.md
+    - repos/framegotui/docs/PROTOCOLS.md
+    - repos/framegotui/docs/VIBE_CODING.md
+    - repos/framegotui/docs/BEST_PRACTICES.md
+    - repos/framegotui/BEST_PRACTICES_2026.md
+    - repos/framegotui/docs/TESTING.md
+    - repos/framegotui/docs/VALIDATION_PIPELINE.md
+  framegotui_planning:
+    - repos/framegotui/docs/PLAN_REPLAN.md
+    - repos/framegotui/docs/PLANS_INDEX.md
+    - repos/framegotui/docs/FINAL_REVIEW_WITH_REPLAN.md
+    - repos/framegotui/docs/DEEP_REVIEW_FINDINGS.md

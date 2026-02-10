@@ -1,0 +1,25 @@
+phase: claude_code_parity
+macro_phase: 3
+microtasks:
+  - id: 3.1
+    title: CLI flags parity (core)
+    details:
+      - Flags for model, provider, system prompt, files
+      - Output styles and non-interactive modes
+  - id: 3.2
+    title: Slash commands filesystem discovery
+    details:
+      - Read ~/.golem/commands and .golem/commands
+      - Execute command scripts with args
+      - Help generation
+  - id: 3.3
+    title: Settings.json support
+    details:
+      - Parse ~/.golem/settings.json
+      - Support env overrides
+  - id: 3.4
+    title: Interactive mode enhancements
+    details:
+      - Input history, command history
+      - Checkpointing stub
+      - Statusline options

@@ -1,0 +1,31 @@
+phase: zai_provider
+macro_phase: 2
+microtasks:
+  - id: 2.1
+    title: Align base URLs and endpoints
+    details:
+      - Update base URL to https://api.z.ai/api/paas/v4
+      - Update chat/completions endpoint
+      - Update embeddings endpoint
+  - id: 2.2
+    title: Implement business error parsing
+    details:
+      - Parse error payload with code/message
+      - Map to typed error structs
+  - id: 2.3
+    title: Implement SSE streaming
+    details:
+      - Parse event stream data
+      - Emit incremental tokens
+      - Handle finish_reason
+  - id: 2.4
+    title: Web search tool API
+    details:
+      - Add client method for web_search
+      - Response models + tests
+  - id: 2.5
+    title: Agent API support
+    details:
+      - Agent chat endpoint
+      - File upload + retrieve result
+      - Conversation history

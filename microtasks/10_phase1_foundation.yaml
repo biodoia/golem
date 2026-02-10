@@ -1,0 +1,27 @@
+phase: foundation
+macro_phase: 1
+microtasks:
+  - id: 1.1
+    title: Define new app architecture boundaries
+    details:
+      - Add internal/app for shared state, event bus, config
+      - Define provider interfaces in internal/providers
+      - Define ui model adapter for FrameGoTUI
+  - id: 1.2
+    title: Create config schema and loader
+    details:
+      - Support ~/.golem/config.yaml and ~/.golem/settings.json
+      - Environment variable overrides
+      - Validation + defaults
+  - id: 1.3
+    title: Logging and error policy
+    details:
+      - Structured logger (stderr)
+      - Error wrapping conventions
+      - Graceful degradation patterns
+  - id: 1.4
+    title: Testing baseline
+    details:
+      - Unit tests for config parsing
+      - Unit tests for command parsing
+      - Test utilities for providers

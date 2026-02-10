@@ -259,17 +259,3 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 	return string(output), nil
 }
 
-// Parse parses a command string
-func Parse(input string) (cmd string, args []string, isCommand bool) {
-	input = strings.TrimSpace(input)
-	if !strings.HasPrefix(input, "/") {
-		return "", nil, false
-	}
-	
-	parts := strings.Fields(input[1:]) // Remove leading /
-	if len(parts) == 0 {
-		return "", nil, false
-	}
-	
-	return parts[0], parts[1:], true
-}

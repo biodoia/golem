@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 // Server represents an MCP server
@@ -83,14 +84,26 @@ type Process struct {
 
 // Manager manages MCP server processes
 type Manager struct {
-	servers   map[string]*Process
-	mu        sync.RWMutex
+	servers map[string]*Process
+	mu      sync.RWMutex
 }
 
 // NewManager creates a new MCP manager
 func NewManager() *Manager {
 	return &Manager{
 		servers: make(map[string]*Process),
+	}
+}
+
+// LoadFromConfig loads servers from MCP config
+func (m *Manager) LoadFromConfig(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+	for _, server := range cfg.Servers {
+		if _, exists := m.servers[server.Name]; !exists {
+			m.servers[server.Name] = &Process{Server: server}
+		}
 	}
 }
 
@@ -179,7 +192,7 @@ func (m *Manager) Call(name string, method string, params interface{}) (json.Raw
 	// Build JSON-RPC request
 	req := map[string]interface{}{
 		"jsonrpc": "2.0",
-		"id":      1,
+		"id":      time.Now().UnixNano(),
 		"method":  method,
 		"params":  params,
 	}
@@ -196,6 +209,7 @@ func (m *Manager) Call(name string, method string, params interface{}) (json.Raw
 
 	// Read response
 	reader := bufio.NewReader(proc.Stdout)
+	_ = proc.Cmd.ProcessState
 	respBytes, err := reader.ReadBytes('\n')
 	if err != nil {
 		return nil, fmt.Errorf("read response: %w", err)

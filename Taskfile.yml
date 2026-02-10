@@ -1,0 +1,55 @@
+version: '3'
+
+vars:
+  BINARY_NAME: 'golem'
+
+includes:
+  framegotui:
+    taskfile: repos/framegotui/Taskfile.yml
+    dir: repos/framegotui
+
+tasks:
+  default:
+    desc: "Run full pipeline"
+    cmds:
+      - task: phase1
+      - task: phase2
+      - task: phase3
+      - task: phase4
+      - task: phase5
+      - task: phase6
+
+  phase1:
+    desc: "Foundation"
+    cmds:
+      - echo "Phase 1 foundation"
+
+  phase2:
+    desc: "Z.AI provider"
+    cmds:
+      - echo "Phase 2 zai provider"
+
+  phase3:
+    desc: "Claude parity"
+    cmds:
+      - echo "Phase 3 claude parity"
+
+  phase4:
+    desc: "MCP enterprise"
+    cmds:
+      - echo "Phase 4 mcp enterprise"
+
+  phase5:
+    desc: "FrameGoTUI TUI"
+    cmds:
+      - echo "Phase 5 tui"
+
+  phase6:
+    desc: "Enterprise quality"
+    cmds:
+      - echo "Phase 6 enterprise quality"
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - go test ./...

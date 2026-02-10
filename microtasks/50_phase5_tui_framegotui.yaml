@@ -1,0 +1,23 @@
+phase: tui_framegotui
+macro_phase: 5
+microtasks:
+  - id: 5.1
+    title: FrameGoTUI app skeleton
+    details:
+      - Base model with chat state
+      - Status bar and input component
+  - id: 5.2
+    title: Streaming rendering
+    details:
+      - Token-by-token rendering
+      - Visual loading indicators
+  - id: 5.3
+    title: Model/provider switching UI
+    details:
+      - Selector panel
+      - Config persistence
+  - id: 5.4
+    title: Command handling integration
+    details:
+      - Hook slash commands into UI
+      - Display command output in chat
