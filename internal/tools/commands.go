@@ -33,6 +33,14 @@ func Commands() map[string]*Command {
 		cmdAuth,
 		cmdClear,
 		cmdExit,
+		// File operations
+		cmdRead,
+		cmdWrite,
+		cmdEdit,
+		cmdGlob,
+		cmdLs,
+		cmdCat,
+		cmdExists,
 	}
 
 	result := make(map[string]*Command)
@@ -53,9 +61,27 @@ var cmdHelp = &Command{
 	Handler: func(ctx context.Context, args []string) (string, error) {
 		var b strings.Builder
 		b.WriteString("Available commands:\n\n")
-		for _, cmd := range []*Command{cmdBuild, cmdTest, cmdPlan, cmdAgents, cmdModel, cmdMCP, cmdConfig, cmdAuth, cmdClear, cmdExit} {
-			b.WriteString(fmt.Sprintf("  /%s - %s\n", cmd.Name, cmd.Description))
-		}
+		b.WriteString("Core:\n")
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "help", cmdHelp.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "build", cmdBuild.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "test", cmdTest.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "plan", cmdPlan.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "clear", cmdClear.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "exit", cmdExit.Description))
+		b.WriteString("\nFile Operations:\n")
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "read", cmdRead.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "write", cmdWrite.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "edit", cmdEdit.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "ls", cmdLs.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "glob", cmdGlob.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "cat", cmdCat.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "exists", cmdExists.Description))
+		b.WriteString("\nManagement:\n")
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "agents", cmdAgents.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "model", cmdModel.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "mcp", cmdMCP.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "config", cmdConfig.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "auth", cmdAuth.Description))
 		return b.String(), nil
 	},
 }
@@ -247,6 +273,64 @@ var cmdExit = &Command{
 	},
 }
 
+// File operation commands for Claude parity
+
+var cmdRead = &Command{
+	Name:        "read",
+	Aliases:     []string{"r"},
+	Description: "Read file contents",
+	Usage:       "/read <path>",
+	Handler:     ReadCommand,
+}
+
+var cmdWrite = &Command{
+	Name:        "write",
+	Aliases:     []string{"save", "create"},
+	Description: "Write file contents",
+	Usage:       "/write <path> <content>",
+	Handler:     WriteCommand,
+}
+
+var cmdEdit = &Command{
+	Name:        "edit",
+	Aliases:     []string{"replace", "sed"},
+	Description: "Make precise text replacements in a file",
+	Usage:       "/edit <path> <old_text> <new_text>",
+	Handler:     EditCommand,
+}
+
+var cmdGlob = &Command{
+	Name:        "glob",
+	Aliases:     []string{"find", "match"},
+	Description: "Find files matching a pattern",
+	Usage:       "/glob <pattern>",
+	Handler:     GlobCommand,
+}
+
+var cmdLs = &Command{
+	Name:        "ls",
+	Aliases:     []string{"dir", "list"},
+	Description: "List directory contents",
+	Usage:       "/ls [path]",
+	Handler:     LsCommand,
+}
+
+var cmdCat = &Command{
+	Name:        "cat",
+	Aliases:     []string{},
+	Description: "Display file contents (alias for read)",
+	Usage:       "/cat <path>",
+	Handler:     CatCommand,
+}
+
+var cmdExists = &Command{
+	Name:        "exists",
+	Aliases:     []string{"test"},
+	Description: "Check if a file or directory exists",
+	Usage:       "/exists <path>",
+	Handler:     ExistsCommand,
+}
+
 // runCommand executes a shell command
 func runCommand(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
@@ -257,5 +341,107 @@ func runCommand(ctx context.Context, name string, args ...string) (string, error
 		return string(output), fmt.Errorf("%s failed: %w\n%s", name, err, output)
 	}
 	return string(output), nil
+}
+
+// File operation command handlers
+
+// ReadCommand reads a file and returns its contents
+func ReadCommand(ctx context.Context, args []string) (string, error) {
+	if len(args) == 0 {
+		return "", fmt.Errorf("usage: /read <path>")
+	}
+	result, err := ReadFile(ctx, args[0])
+	if err != nil {
+		return "", err
+	}
+	if result.ReadError != "" {
+		return "", fmt.Errorf(result.ReadError)
+	}
+	if !result.Exists {
+		return "", fmt.Errorf("file does not exist: %s", args[0])
+	}
+	if result.IsDir {
+		return "", fmt.Errorf("path is a directory, use /ls instead")
+	}
+	return result.Content, nil
+}
+
+// WriteCommand writes content to a file
+func WriteCommand(ctx context.Context, args []string) (string, error) {
+	if len(args) < 2 {
+		return "", fmt.Errorf("usage: /write <path> <content>")
+	}
+	content := strings.Join(args[1:], " ")
+	result, err := WriteFile(ctx, args[0], content)
+	if err != nil {
+		return "", err
+	}
+	if result.WriteError != "" {
+		return "", fmt.Errorf(result.WriteError)
+	}
+	return fmt.Sprintf("Wrote %d bytes to %s", result.Written, result.Path), nil
+}
+
+// EditCommand replaces text in a file
+func EditCommand(ctx context.Context, args []string) (string, error) {
+	if len(args) < 3 {
+		return "", fmt.Errorf("usage: /edit <path> <old_text> <new_text>")
+	}
+	result, err := EditFile(ctx, args[0], args[1], args[2])
+	if err != nil {
+		return "", err
+	}
+	if result.EditError != "" {
+		return "", fmt.Errorf(result.EditError)
+	}
+	return fmt.Sprintf("Made %d replacements in %s", result.Replacements, result.Path), nil
+}
+
+// GlobCommand finds files matching a pattern
+func GlobCommand(ctx context.Context, args []string) (string, error) {
+	if len(args) == 0 {
+		return "", fmt.Errorf("usage: /glob <pattern>")
+	}
+	result, err := Glob(ctx, args[0])
+	if err != nil {
+		return "", err
+	}
+	if result.Count == 0 {
+		return "No files matched", nil
+	}
+	return strings.Join(result.Paths, "\n"), nil
+}
+
+// LsCommand lists directory contents
+func LsCommand(ctx context.Context, args []string) (string, error) {
+	path := "."
+	if len(args) > 0 {
+		path = args[0]
+	}
+	entries, err := ListDir(ctx, path)
+	if err != nil {
+		return "", err
+	}
+	return strings.Join(entries, "\n"), nil
+}
+
+// CatCommand is an alias for ReadCommand
+func CatCommand(ctx context.Context, args []string) (string, error) {
+	return ReadCommand(ctx, args)
+}
+
+// ExistsCommand checks if a path exists
+func ExistsCommand(ctx context.Context, args []string) (string, error) {
+	if len(args) == 0 {
+		return "", fmt.Errorf("usage: /exists <path>")
+	}
+	exists, err := FileExists(ctx, args[0])
+	if err != nil {
+		return "", err
+	}
+	if exists {
+		return fmt.Sprintf("✓ %s exists", args[0]), nil
+	}
+	return fmt.Sprintf("✗ %s does not exist", args[0]), nil
 }
 
