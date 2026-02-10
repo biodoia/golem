@@ -62,7 +62,7 @@ var cmdHelp = &Command{
 		var b strings.Builder
 		b.WriteString("Available commands:\n\n")
 		b.WriteString("Core:\n")
-		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "help", cmdHelp.Description))
+		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "help", "Show available commands"))
 		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "build", cmdBuild.Description))
 		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "test", cmdTest.Description))
 		b.WriteString(fmt.Sprintf("  /%-12s - %s\n", "plan", cmdPlan.Description))

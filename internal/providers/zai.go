@@ -190,6 +190,72 @@ type ToolExecutor interface {
 	Execute(ctx context.Context, name string, args map[string]interface{}) (string, error)
 }
 
+// ChatStreamWithTools sends a streaming request with tool call support
+// Uses the enhanced client method that properly handles tool calls in SSE stream
+func (p *ZAIProvider) ChatStreamWithTools(ctx context.Context, input string, textCallback StreamCallback, toolCallback func(zhipu.ToolCall)) error {
+	messages := append(p.history, zhipu.Message{Role: "user", Content: input})
+
+	req := &zhipu.ChatRequest{
+		Model:       p.model,
+		Messages:    messages,
+		Temperature: p.temperature,
+		Tools:       p.tools,
+		ToolChoice:  "auto",
+		Stream:      true,
+	}
+
+	textCh, toolCh, errCh := p.client.ChatStreamWithTools(ctx, req)
+
+	var fullResponse string
+	var toolCalls []zhipu.ToolCall
+
+	for {
+		select {
+		case text, ok := <-textCh:
+			if !ok {
+				textCh = nil
+			} else if text != "" {
+				fullResponse += text
+				if textCallback != nil {
+					textCallback(text)
+				}
+			}
+		case tc, ok := <-toolCh:
+			if !ok {
+				toolCh = nil
+			} else {
+				toolCalls = append(toolCalls, tc)
+				if toolCallback != nil {
+					toolCallback(tc)
+				}
+			}
+		case err, ok := <-errCh:
+			if ok && err != nil {
+				return err
+			}
+			errCh = nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+
+		// All channels closed
+		if textCh == nil && toolCh == nil && errCh == nil {
+			break
+		}
+	}
+
+	// Update history with assistant response
+	if fullResponse != "" || len(toolCalls) > 0 {
+		msg := zhipu.Message{Role: "assistant", Content: fullResponse}
+		if len(toolCalls) > 0 {
+			msg.ToolCalls = toolCalls
+		}
+		p.history = append(messages, msg)
+	}
+
+	return nil
+}
+
 // AvailableModels returns all Z.AI models
 func AvailableModels() []string {
 	return zhipu.AllModels()

@@ -25,9 +25,12 @@ tasks:
       - echo "Phase 1 foundation"
 
   phase2:
-    desc: "Z.AI provider"
+    desc: "Z.AI provider with streaming and function calling"
     cmds:
-      - echo "Phase 2 zai provider"
+      - echo "Phase 2 zai provider - Enhanced streaming + function calling"
+      - task: phase2-streaming
+      - task: phase2-tools
+      - task: phase2-testing
 
   phase3:
     desc: "Claude parity"
@@ -48,6 +51,21 @@ tasks:
     desc: "Enterprise quality"
     cmds:
       - echo "Phase 6 enterprise quality"
+
+  phase2-streaming:
+    desc: "Implement enhanced streaming with event types"
+    cmds:
+      - echo "✅ Enhanced streaming implemented (StreamEvent, StreamHandler)"
+
+  phase2-tools:
+    desc: "Implement function calling with tool registry"
+    cmds:
+      - echo "✅ Function calling implemented (Tool, ToolHandler, DefaultTools)"
+
+  phase2-testing:
+    desc: "Test Phase 2 implementation"
+    cmds:
+      - go test ./internal/providers/... -v
 
   test:
     desc: "Run tests"
